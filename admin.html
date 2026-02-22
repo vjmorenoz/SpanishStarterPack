@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — Spanish Starter Pack</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@200..700&family=Quicksand:wght@300..700&display=swap" rel="stylesheet">
+
+  <!-- Supabase SDK (UMD build — no bundler needed) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- Markdown parser -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+  <style>
+    .split-editor { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 900px) { .split-editor { grid-template-columns: 1fr; } }
+
+    .preview-pane {
+      border: 1.5px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      padding: 16px 20px;
+      min-height: 400px;
+      background: var(--color-surface-2);
+      overflow-y: auto;
+    }
+    .md-hint { font-size: 0.78rem; color: var(--color-text-light); margin-top: 6px; line-height: 1.6; }
+
+    /* Analytics bar chart */
+    .chart-wrap { display: flex; flex-direction: column; gap: 7px; margin-top: 16px; }
+    .chart-row { display: flex; align-items: center; gap: 10px; font-size: 0.82rem; }
+    .chart-label { width: 68px; text-align: right; color: var(--color-text-muted); flex-shrink: 0; }
+    .chart-bar-bg { flex: 1; background: var(--color-surface-2); border-radius: 99px; height: 18px; overflow: hidden; }
+    .chart-bar-fill { height: 100%; background: var(--color-accent); border-radius: 99px; transition: width 0.6s ease; }
+    .chart-val { width: 28px; color: var(--color-text-muted); }
+
+    /* Comment cards */
+    .comment-card { background: var(--color-surface); border: 1.5px solid var(--color-border); border-radius: var(--radius-md); padding: 16px 20px; margin-bottom: 12px; }
+    .comment-card.pending { border-left: 4px solid var(--color-accent); }
+    .comment-card h4 { margin-bottom: 4px; font-size: 0.95rem; }
+    .comment-card .cmeta { font-size: 0.78rem; color: var(--color-text-light); margin-bottom: 8px; }
+    .comment-card p { color: var(--color-text-muted); font-size: 0.9rem; line-height: 1.6; }
+    .comment-actions { display: flex; gap: 8px; margin-top: 12px; }
+
+    .user-info-side { margin-top: 20px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 10px 12px; display: flex; align-items: center; gap: 10px; }
+    .user-avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
+    .user-name { font-size: 0.85rem; font-weight: 600; }
+    .user-email { font-size: 0.72rem; color: var(--color-text-light); }
+
+    .inline-badge { display: inline-block; padding: 2px 8px; border-radius: var(--radius-pill); font-size: 0.72rem; font-weight: 700; background: rgba(200,168,75,0.15); color: var(--color-accent); margin-left: 6px; vertical-align: middle; }
+    .section-subtitle { font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-text-light); margin-bottom: 12px; }
+  </style>
+</head>
+<body data-page="admin">
+
+  <!-- ===== LOGIN ===== -->
+  <div id="login-screen" class="login-screen" style="display:none">
+    <div class="login-card">
+      <div style="font-size:3rem;margin-bottom:16px">🇪🇸</div>
+      <h1>Admin Panel</h1>
+      <p>Inicia sesión con tu cuenta de Google para gestionar el contenido.</p>
+      <button class="btn-google" id="google-sign-in">
+        <svg width="20" height="20" viewBox="0 0 48 48">
+          <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+          <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+          <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+          <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.29-8.16 2.29-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+        </svg>
+        Continuar con Google
+      </button>
+      <p style="font-size:0.78rem;color:var(--color-text-light);margin-top:20px">Solo los emails autorizados pueden acceder.</p>
+    </div>
+  </div>
+
+  <!-- ===== ADMIN PANEL ===== -->
+  <div id="admin-panel" style="display:none">
+
+    <nav class="navbar" style="position:sticky;top:0;z-index:100">
+      <a class="logo" href="index.html">Spanish <span>Starter</span> Pack</a>
+      <div style="display:flex;gap:10px;align-items:center">
+        <span style="font-size:0.85rem;color:rgba(255,255,255,0.5)">Admin</span>
+        <button class="theme-toggle" id="theme-toggle-admin">🌙</button>
+        <button class="btn btn-secondary" id="sign-out-btn" style="font-size:0.85rem;padding:7px 16px">Salir</button>
+        <a href="index.html" class="btn btn-secondary" style="font-size:0.85rem;padding:7px 16px">← Ver sitio</a>
+      </div>
+    </nav>
+
+    <div class="admin-layout">
+      <aside class="admin-sidebar">
+        <h3>Menú</h3>
+        <button class="admin-nav-link active" data-section="dashboard">📊 Dashboard</button>
+        <button class="admin-nav-link" data-section="lessons">📚 Lecciones</button>
+        <button class="admin-nav-link" data-section="editor">✏️ Nueva lección</button>
+        <button class="admin-nav-link" data-section="comments">
+          💬 Comentarios <span class="inline-badge" id="pending-count" style="display:none">0</span>
+        </button>
+        <button class="admin-nav-link" data-section="analytics">📈 Analytics</button>
+        <div class="user-info-side" id="user-info-panel"></div>
+      </aside>
+
+      <main class="admin-main">
+
+        <!-- DASHBOARD -->
+        <section id="section-dashboard" class="tab-content active">
+          <div class="admin-header">
+            <h1>Dashboard</h1>
+            <button class="btn btn-secondary" onclick="loadDashboard()" style="font-size:0.85rem">↻ Actualizar</button>
+          </div>
+          <div class="stats-grid">
+            <div class="stat-card"><div class="stat-value" id="stat-total">—</div><div class="stat-label">Total lecciones</div></div>
+            <div class="stat-card" style="border-left-color:#2d7a2d"><div class="stat-value" id="stat-published">—</div><div class="stat-label">Publicadas</div></div>
+            <div class="stat-card" style="border-left-color:#4da3ff"><div class="stat-value" id="stat-views">—</div><div class="stat-label">Visitas totales</div></div>
+            <div class="stat-card" style="border-left-color:#b22222"><div class="stat-value" id="stat-pending">—</div><div class="stat-label">Comentarios pendientes</div></div>
+          </div>
+          <div class="lesson-editor" style="margin-top:20px">
+            <h2 style="font-family:var(--font-display);margin-bottom:16px">Acciones rápidas</h2>
+            <div style="display:flex;gap:12px;flex-wrap:wrap">
+              <button class="btn btn-primary" onclick="showSection('editor');resetEditor()">✏️ Nueva lección</button>
+              <button class="btn btn-secondary" onclick="showSection('lessons')">📚 Ver lecciones</button>
+              <button class="btn btn-secondary" onclick="showSection('comments')">💬 Moderar comentarios</button>
+              <button class="btn btn-secondary" onclick="showSection('analytics')">📈 Ver analytics</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- LESSONS LIST -->
+        <section id="section-lessons" class="tab-content">
+          <div class="admin-header">
+            <h1>Lecciones</h1>
+            <button class="btn btn-primary" onclick="showSection('editor');resetEditor()">+ Nueva</button>
+          </div>
+          <div id="lessons-list" class="lessons-grid">
+            <div class="loading"><div class="spinner"></div> Cargando...</div>
+          </div>
+        </section>
+
+        <!-- EDITOR -->
+        <section id="section-editor" class="tab-content">
+          <div class="admin-header">
+            <h1 id="editor-title">Nueva lección</h1>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-secondary" onclick="saveLesson('draft')">Guardar borrador</button>
+              <button class="btn btn-primary" onclick="saveLesson('published')">🚀 Publicar</button>
+            </div>
+          </div>
+          <div class="lesson-editor">
+            <input type="hidden" id="editing-lesson-id">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+              <div class="editor-field">
+                <label>Título</label>
+                <input type="text" id="lesson-title" placeholder="Ej: Lección 5: La traducción directa" oninput="autoSlug()">
+              </div>
+              <div class="editor-field">
+                <label>Orden (número)</label>
+                <input type="number" id="lesson-order" placeholder="5" min="1">
+              </div>
+            </div>
+            <div class="editor-field">
+              <label>Slug — URL amigable (se genera automáticamente)</label>
+              <input type="text" id="lesson-slug" placeholder="leccion-5-traduccion-directa">
+            </div>
+            <div class="editor-field">
+              <label>Resumen corto (aparece en la lista de lecciones)</label>
+              <textarea id="lesson-summary" rows="2" placeholder="Descripción breve que verán los estudiantes..."></textarea>
+            </div>
+            <div class="editor-field">
+              <label>Contenido — Markdown</label>
+              <div class="editor-toolbar">
+                <button class="toolbar-btn" onclick="insertMd('**','**')"><b>B</b></button>
+                <button class="toolbar-btn" onclick="insertMd('*','*')"><i>I</i></button>
+                <button class="toolbar-btn" onclick="insertMd('\n## ','')">H2</button>
+                <button class="toolbar-btn" onclick="insertMd('\n### ','')">H3</button>
+                <button class="toolbar-btn" onclick="insertMd('\n- ','')">Lista</button>
+                <button class="toolbar-btn" onclick="insertMd('\n> ','')">Destacado</button>
+                <button class="toolbar-btn" onclick="insertMd('`','`')">Código</button>
+                <button class="toolbar-btn" onclick="insertTable()">Tabla</button>
+                <button class="toolbar-btn" onclick="insertMd('\n---\n','')">HR</button>
+                <button class="toolbar-btn" onclick="insertMd('~~','~~')">~~tachado~~</button>
+              </div>
+              <div class="split-editor">
+                <div>
+                  <textarea id="lesson-content" rows="24"
+                    placeholder="# Título&#10;&#10;Escribe en Markdown...&#10;&#10;## Sección&#10;**negrita**, *cursiva*&#10;&#10;- Lista&#10;&#10;> Ejemplo destacado"
+                    oninput="updatePreview()"></textarea>
+                  <p class="md-hint">**negrita** • *cursiva* • ## Título • - lista • > destacado • `código` • --- línea divisoria</p>
+                </div>
+                <div>
+                  <p class="section-subtitle">Vista previa en tiempo real</p>
+                  <div class="preview-pane lesson-content" id="content-preview"></div>
+                </div>
+              </div>
+            </div>
+            <div class="editor-field">
+              <label>Tags (separados por coma)</label>
+              <input type="text" id="lesson-tags" placeholder="gramática, conjugación, principiantes">
+            </div>
+            <div class="editor-actions">
+              <button class="btn btn-danger" id="delete-lesson-btn" style="display:none" onclick="deleteLesson()">Eliminar lección</button>
+              <button class="btn btn-secondary" onclick="resetEditor()">Limpiar</button>
+              <button class="btn btn-secondary" onclick="saveLesson('draft')">Guardar borrador</button>
+              <button class="btn btn-primary" onclick="saveLesson('published')">🚀 Publicar</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- COMMENTS -->
+        <section id="section-comments" class="tab-content">
+          <div class="admin-header">
+            <h1>Comentarios</h1>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-secondary" onclick="loadComments(false)" style="font-size:0.85rem">Pendientes</button>
+              <button class="btn btn-secondary" onclick="loadComments(true)" style="font-size:0.85rem">Todos</button>
+            </div>
+          </div>
+          <div id="comments-list">
+            <div class="loading"><div class="spinner"></div> Cargando...</div>
+          </div>
+        </section>
+
+        <!-- ANALYTICS -->
+        <section id="section-analytics" class="tab-content">
+          <div class="admin-header">
+            <h1>Analytics</h1>
+            <select id="days-select" onchange="loadAnalytics()"
+              style="padding:8px 12px;border-radius:var(--radius-sm);border:1.5px solid var(--color-border);background:var(--color-surface);color:var(--color-text);font-family:var(--font-body);font-size:0.85rem;cursor:pointer">
+              <option value="7">Últimos 7 días</option>
+              <option value="14" selected>Últimos 14 días</option>
+              <option value="30">Últimos 30 días</option>
+            </select>
+          </div>
+
+          <div class="stats-grid" id="analytics-stats" style="margin-bottom:24px">
+            <div class="loading"><div class="spinner"></div></div>
+          </div>
+
+          <div class="lesson-editor" style="margin-bottom:20px">
+            <h2 style="font-family:var(--font-display);font-size:1.2rem;margin-bottom:4px">Visitas por día</h2>
+            <p style="font-size:0.82rem;color:var(--color-text-light);margin-bottom:0" id="chart-period">—</p>
+            <div class="chart-wrap" id="views-chart">
+              <div class="loading"><div class="spinner"></div></div>
+            </div>
+          </div>
+
+          <div class="lesson-editor">
+            <h2 style="font-family:var(--font-display);font-size:1.2rem;margin-bottom:16px">Lecciones más visitadas</h2>
+            <div id="top-lessons-list">
+              <div class="loading"><div class="spinner"></div></div>
+            </div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div><!-- end admin-panel -->
+
+  <script src="supabase-service.js"></script>
+  <script>
+  // ============================================
+  // THEME
+  // ============================================
+  ThemeManager.init();
+  const adminThemeBtn = document.getElementById('theme-toggle-admin');
+  const updateIcon = () => {
+    const dark = ThemeManager.get() === 'dark' ||
+      (ThemeManager.get() === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    adminThemeBtn.textContent = dark ? '☀️' : '🌙';
+  };
+  updateIcon();
+  adminThemeBtn.addEventListener('click', () => { ThemeManager.toggle(); updateIcon(); });
+
+  // ============================================
+  // AUTH
+  // ============================================
+  document.addEventListener('authStateChanged', async ({ detail: { user } }) => {
+    if (user && AuthService.isAdmin(user)) {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('admin-panel').style.display = 'block';
+      renderUserInfo(user);
+      loadDashboard();
+      loadPendingCount();
+    } else if (user && !AuthService.isAdmin(user)) {
+      showToast('Acceso denegado: email no autorizado.', 'error');
+      await AuthService.signOut();
+      showLogin();
+    } else {
+      showLogin();
+    }
+  });
+
+  function showLogin() {
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('admin-panel').style.display = 'none';
+  }
+
+  document.getElementById('google-sign-in').addEventListener('click', async () => {
+    try { await AuthService.signInWithGoogle(); }
+    catch (e) { showToast('Error al iniciar sesión: ' + e.message, 'error'); }
+  });
+
+  document.getElementById('sign-out-btn').addEventListener('click', async () => {
+    await AuthService.signOut();
+    showToast('Sesión cerrada');
+  });
+
+  function renderUserInfo(user) {
+    document.getElementById('user-info-panel').innerHTML = `
+      <img class="user-avatar" src="${user.user_metadata?.avatar_url || ''}" alt="">
+      <div>
+        <div class="user-name">${user.user_metadata?.full_name || 'Admin'}</div>
+        <div class="user-email">${user.email}</div>
+      </div>`;
+  }
+
+  // ============================================
+  // NAVIGATION
+  // ============================================
+  function showSection(name) {
+    document.querySelectorAll('.tab-content').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.admin-nav-link').forEach(b => b.classList.remove('active'));
+    document.getElementById('section-' + name).classList.add('active');
+    document.querySelector(`[data-section="${name}"]`).classList.add('active');
+    if (name === 'lessons') loadLessons();
+    if (name === 'comments') loadComments(false);
+    if (name === 'analytics') loadAnalytics();
+  }
+  document.querySelectorAll('.admin-nav-link').forEach(btn =>
+    btn.addEventListener('click', () => showSection(btn.dataset.section)));
+
+  // ============================================
+  // DASHBOARD
+  // ============================================
+  async function loadDashboard() {
+    try {
+      const all = await LessonsService.getAll(false);
+      document.getElementById('stat-total').textContent = all.length;
+      document.getElementById('stat-published').textContent = all.filter(l => l.status === 'published').length;
+    } catch(e) {}
+    try {
+      const stats = await AnalyticsService.getStats();
+      document.getElementById('stat-views').textContent = (stats.totalViews || 0).toLocaleString();
+      const pending = (stats.lessons || []).reduce((s, l) => s + (l.pending_comments || 0), 0);
+      document.getElementById('stat-pending').textContent = pending;
+    } catch(e) {
+      document.getElementById('stat-views').textContent = '—';
+      document.getElementById('stat-pending').textContent = '—';
+    }
+  }
+
+  async function loadPendingCount() {
+    try {
+      const all = await CommentsService.getAll(false);
+      const n = all.filter(c => !c.approved).length;
+      const badge = document.getElementById('pending-count');
+      badge.textContent = n;
+      badge.style.display = n > 0 ? 'inline-block' : 'none';
+    } catch(e) {}
+  }
+
+  // ============================================
+  // LESSONS
+  // ============================================
+  async function loadLessons() {
+    const el = document.getElementById('lessons-list');
+    el.innerHTML = '<div class="loading"><div class="spinner"></div> Cargando...</div>';
+    try {
+      const lessons = await LessonsService.getAll(false);
+      if (!lessons.length) {
+        el.innerHTML = '<div class="empty-state"><h3>Sin lecciones aún</h3><p>¡Crea la primera!</p></div>';
+        return;
+      }
+      el.innerHTML = lessons.map(l => `
+        <div class="lesson-card">
+          <div class="lesson-card-info">
+            <h3>${l.title} <span class="badge ${l.status}">${l.status === 'published' ? 'Publicada' : 'Borrador'}</span></h3>
+            <span>Orden: ${l.order} • ${new Date(l.updated_at).toLocaleDateString('es-ES',{day:'numeric',month:'short',year:'numeric'})}</span>
+          </div>
+          <div class="lesson-card-actions">
+            <button class="btn btn-secondary" style="font-size:0.82rem;padding:7px 14px" onclick="editLesson('${l.id}')">✏️ Editar</button>
+            <button class="btn btn-${l.status==='published'?'secondary':'primary'}" style="font-size:0.82rem;padding:7px 14px"
+              onclick="toggleStatus('${l.id}','${l.status}')">
+              ${l.status === 'published' ? 'Despublicar' : '🚀 Publicar'}
+            </button>
+          </div>
+        </div>`).join('');
+    } catch(e) {
+      el.innerHTML = `<div class="empty-state"><h3>Error</h3><p>${e.message}</p></div>`;
+    }
+  }
+
+  async function editLesson(id) {
+    showSection('editor');
+    const l = await LessonsService.getById(id);
+    if (!l) return;
+    document.getElementById('editing-lesson-id').value = id;
+    document.getElementById('editor-title').textContent = 'Editar lección';
+    document.getElementById('lesson-title').value = l.title || '';
+    document.getElementById('lesson-slug').value = l.slug || '';
+    document.getElementById('lesson-order').value = l.order || '';
+    document.getElementById('lesson-summary').value = l.summary || '';
+    document.getElementById('lesson-content').value = l.content || '';
+    document.getElementById('lesson-tags').value = (l.tags || []).join(', ');
+    document.getElementById('delete-lesson-btn').style.display = 'inline-block';
+    updatePreview();
+  }
+
+  function resetEditor() {
+    document.getElementById('editing-lesson-id').value = '';
+    document.getElementById('editor-title').textContent = 'Nueva lección';
+    ['lesson-title','lesson-slug','lesson-order','lesson-summary','lesson-content','lesson-tags']
+      .forEach(id => { document.getElementById(id).value = ''; });
+    document.getElementById('delete-lesson-btn').style.display = 'none';
+    document.getElementById('content-preview').innerHTML = '';
+  }
+
+  async function saveLesson(status) {
+    const id = document.getElementById('editing-lesson-id').value;
+    const title = document.getElementById('lesson-title').value.trim();
+    if (!title) { showToast('El título es obligatorio', 'error'); return; }
+
+    const data = {
+      title,
+      slug: document.getElementById('lesson-slug').value.trim() || LessonsService.generateSlug(title),
+      order: parseInt(document.getElementById('lesson-order').value) || 999,
+      summary: document.getElementById('lesson-summary').value.trim(),
+      content: document.getElementById('lesson-content').value,
+      tags: document.getElementById('lesson-tags').value.split(',').map(t=>t.trim()).filter(Boolean),
+      status,
+    };
+    try {
+      if (id) {
+        await LessonsService.update(id, data);
+      } else {
+        const created = await LessonsService.create(data);
+        document.getElementById('editing-lesson-id').value = created.id;
+        document.getElementById('editor-title').textContent = 'Editar lección';
+        document.getElementById('delete-lesson-btn').style.display = 'inline-block';
+      }
+      showToast(status === 'published' ? '🚀 Lección publicada!' : '💾 Guardada como borrador');
+    } catch(e) { showToast('Error: ' + e.message, 'error'); }
+  }
+
+  async function toggleStatus(id, currentStatus) {
+    try {
+      await LessonsService.toggleStatus(id, currentStatus);
+      showToast(currentStatus === 'published' ? 'Lección despublicada' : '🚀 Publicada!');
+      loadLessons();
+    } catch(e) { showToast('Error: ' + e.message, 'error'); }
+  }
+
+  async function deleteLesson() {
+    const id = document.getElementById('editing-lesson-id').value;
+    if (!id || !confirm('¿Eliminar esta lección permanentemente?')) return;
+    try {
+      await LessonsService.delete(id);
+      showToast('Lección eliminada');
+      resetEditor();
+      showSection('lessons');
+    } catch(e) { showToast('Error: ' + e.message, 'error'); }
+  }
+
+  function autoSlug() {
+    if (document.getElementById('editing-lesson-id').value) return;
+    document.getElementById('lesson-slug').value =
+      LessonsService.generateSlug(document.getElementById('lesson-title').value);
+  }
+
+  // ============================================
+  // MARKDOWN EDITOR
+  // ============================================
+  function updatePreview() {
+    const content = document.getElementById('lesson-content').value;
+    if (typeof marked !== 'undefined')
+      document.getElementById('content-preview').innerHTML = marked.parse(content);
+  }
+  function insertMd(before, after) {
+    const ta = document.getElementById('lesson-content');
+    const s = ta.selectionStart, e = ta.selectionEnd;
+    ta.setRangeText(before + ta.value.substring(s,e) + after, s, e, 'end');
+    ta.focus(); updatePreview();
+  }
+  function insertTable() {
+    insertMd('\n| Columna 1 | Columna 2 | Columna 3 |\n|-----------|-----------|------------|\n| Celda     | Celda     | Celda      |\n| Celda     | Celda     | Celda      |\n','');
+  }
+
+  // ============================================
+  // COMMENTS
+  // ============================================
+  function escHtml(s) {
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  async function loadComments(showAll = false) {
+    const el = document.getElementById('comments-list');
+    el.innerHTML = '<div class="loading"><div class="spinner"></div> Cargando...</div>';
+    try {
+      const all = await CommentsService.getAll(false);
+      const list = showAll ? all : all.filter(c => !c.approved);
+      if (!list.length) {
+        el.innerHTML = `<div class="empty-state"><h3>${showAll ? 'Sin comentarios' : '¡Sin pendientes! 🎉'}</h3></div>`;
+        return;
+      }
+      el.innerHTML = list.map(c => `
+        <div class="comment-card ${c.approved ? '' : 'pending'}">
+          <h4>${escHtml(c.author_name)} ${!c.approved ? '<span class="inline-badge">Pendiente</span>' : ''}</h4>
+          <div class="cmeta">
+            ${c.author_email ? escHtml(c.author_email) + ' · ' : ''}
+            ${c.lessons?.title ? 'En: <strong>' + escHtml(c.lessons.title) + '</strong> · ' : ''}
+            ${new Date(c.created_at).toLocaleDateString('es-ES',{day:'numeric',month:'short',year:'numeric'})}
+          </div>
+          <p>${escHtml(c.body)}</p>
+          <div class="comment-actions">
+            ${!c.approved ? `<button class="btn btn-primary" style="font-size:0.82rem;padding:6px 14px" onclick="approveComment('${c.id}')">✓ Aprobar</button>` : ''}
+            <button class="btn btn-danger" style="font-size:0.82rem;padding:6px 14px" onclick="deleteComment('${c.id}')">Eliminar</button>
+          </div>
+        </div>`).join('');
+    } catch(e) {
+      el.innerHTML = `<div class="empty-state"><h3>Error</h3><p>${e.message}</p></div>`;
+    }
+  }
+
+  async function approveComment(id) {
+    try { await CommentsService.approve(id); showToast('Comentario aprobado ✓'); loadComments(false); loadPendingCount(); }
+    catch(e) { showToast('Error: ' + e.message, 'error'); }
+  }
+  async function deleteComment(id) {
+    if (!confirm('¿Eliminar este comentario?')) return;
+    try { await CommentsService.delete(id); showToast('Eliminado'); loadComments(false); loadPendingCount(); }
+    catch(e) { showToast('Error: ' + e.message, 'error'); }
+  }
+
+  // ============================================
+  // ANALYTICS
+  // ============================================
+  async function loadAnalytics() {
+    const days = parseInt(document.getElementById('days-select').value) || 14;
+    document.getElementById('analytics-stats').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+    document.getElementById('views-chart').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+    document.getElementById('top-lessons-list').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+
+    try {
+      const [stats, chartData] = await Promise.all([
+        AnalyticsService.getStats(),
+        AnalyticsService.getViewsPerDay(days)
+      ]);
+
+      const total = chartData.reduce((s,d) => s + d.views, 0);
+      const avg = Math.round(total / days);
+      document.getElementById('analytics-stats').innerHTML = `
+        <div class="stat-card"><div class="stat-value">${(stats.totalViews||0).toLocaleString()}</div><div class="stat-label">Visitas totales</div></div>
+        <div class="stat-card" style="border-left-color:#4da3ff"><div class="stat-value">${total}</div><div class="stat-label">Últimos ${days} días</div></div>
+        <div class="stat-card" style="border-left-color:#2d7a2d"><div class="stat-value">${avg}</div><div class="stat-label">Promedio/día</div></div>`;
+
+      document.getElementById('chart-period').textContent =
+        `${chartData[0]?.date||''} → ${chartData[chartData.length-1]?.date||''}`;
+      const maxV = Math.max(...chartData.map(d=>d.views), 1);
+      document.getElementById('views-chart').innerHTML = chartData.map(d=>`
+        <div class="chart-row">
+          <span class="chart-label">${d.date.slice(5)}</span>
+          <div class="chart-bar-bg"><div class="chart-bar-fill" style="width:${Math.round(d.views/maxV*100)}%"></div></div>
+          <span class="chart-val">${d.views}</span>
+        </div>`).join('');
+
+      const top = [...(stats.lessons||[])].sort((a,b)=>(b.view_count||0)-(a.view_count||0)).slice(0,8);
+      if (!top.length) {
+        document.getElementById('top-lessons-list').innerHTML = '<p style="color:var(--color-text-muted);font-size:0.9rem">Sin datos de visitas aún.</p>';
+      } else {
+        const maxL = Math.max(...top.map(l=>l.view_count||0), 1);
+        document.getElementById('top-lessons-list').innerHTML = top.map(l=>`
+          <div class="chart-row" style="margin-bottom:10px">
+            <span style="width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--color-text-muted);font-size:0.82rem">${escHtml(l.title)}</span>
+            <div class="chart-bar-bg" style="margin:0 10px"><div class="chart-bar-fill" style="width:${Math.round((l.view_count||0)/maxL*100)}%;background:var(--color-accent-hover)"></div></div>
+            <span class="chart-val">${l.view_count||0}</span>
+          </div>`).join('');
+      }
+    } catch(e) {
+      ['analytics-stats','views-chart','top-lessons-list'].forEach(id => {
+        document.getElementById(id).innerHTML = `<div class="empty-state"><h3>Error</h3><p>${e.message}</p></div>`;
+      });
+    }
+  }
+
+  // ============================================
+  // TOAST
+  // ============================================
+  function showToast(message, type = 'success') {
+    const existing = document.querySelector('.toast');
+    if (existing) existing.remove();
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    t.textContent = message;
+    document.body.appendChild(t);
+    requestAnimationFrame(() => requestAnimationFrame(() => t.classList.add('show')));
+    setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 350); }, 3500);
+  }
+  </script>
+</body>
+</html>
