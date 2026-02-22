@@ -123,11 +123,11 @@ grant select on lesson_stats to authenticated, anon;
 // CONFIG — Reemplaza con tus valores reales
 // ============================================
 
-const SUPABASE_URL  = 'https://YOUR_PROJECT.supabase.co';
-const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY';
+const SUPABASE_URL = "https://nobzewkdjmzqeyzozmdb.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_WIvtYTdwhX-5uEC1TaceEA_1qDZ-H13";
 
 // Emails con acceso al admin
-const ADMIN_EMAILS = ['jmteach15@gmail.com'];
+const ADMIN_EMAILS = ["victorj601@gmail.com"];
 
 // ============================================
 // INIT
@@ -136,17 +136,19 @@ const ADMIN_EMAILS = ['jmteach15@gmail.com'];
 let supabase;
 
 function initSupabase() {
-  if (typeof window.supabase === 'undefined') {
-    console.error('Supabase SDK no cargado. Revisa los script tags.');
+  if (typeof window.supabase === "undefined") {
+    console.error("Supabase SDK no cargado. Revisa los script tags.");
     return false;
   }
   supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   // Escuchar cambios de auth
   supabase.auth.onAuthStateChange((event, session) => {
-    document.dispatchEvent(new CustomEvent('authStateChanged', {
-      detail: { user: session?.user ?? null, event }
-    }));
+    document.dispatchEvent(
+      new CustomEvent("authStateChanged", {
+        detail: { user: session?.user ?? null, event },
+      }),
+    );
   });
 
   return true;
@@ -159,10 +161,10 @@ function initSupabase() {
 const AuthService = {
   async signInWithGoogle() {
     const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
+      provider: "google",
       options: {
-        redirectTo: window.location.origin + '/admin.html'
-      }
+        redirectTo: window.location.origin + "/admin.html",
+      },
     });
     if (error) throw new Error(error.message);
   },
@@ -173,13 +175,15 @@ const AuthService = {
   },
 
   async getUser() {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     return user;
   },
 
   isAdmin(user) {
     return user && ADMIN_EMAILS.includes(user.email);
-  }
+  },
 };
 
 // ============================================
@@ -192,12 +196,12 @@ const LessonsService = {
    */
   async getAll(publishedOnly = true) {
     let query = supabase
-      .from('lessons')
-      .select('*')
-      .order('order', { ascending: true });
+      .from("lessons")
+      .select("*")
+      .order("order", { ascending: true });
 
     if (publishedOnly) {
-      query = query.eq('status', 'published');
+      query = query.eq("status", "published");
     }
 
     const { data, error } = await query;
@@ -210,9 +214,9 @@ const LessonsService = {
    */
   async getById(id) {
     const { data, error } = await supabase
-      .from('lessons')
-      .select('*')
-      .eq('id', id)
+      .from("lessons")
+      .select("*")
+      .eq("id", id)
       .single();
     if (error) return null;
     return data;
@@ -223,10 +227,10 @@ const LessonsService = {
    */
   async getBySlug(slug) {
     const { data, error } = await supabase
-      .from('lessons')
-      .select('*')
-      .eq('slug', slug)
-      .eq('status', 'published')
+      .from("lessons")
+      .select("*")
+      .eq("slug", slug)
+      .eq("status", "published")
       .single();
     if (error) return null;
     return data;
@@ -237,21 +241,21 @@ const LessonsService = {
    */
   async create(lessonData) {
     const user = await AuthService.getUser();
-    if (!AuthService.isAdmin(user)) throw new Error('No autorizado');
+    if (!AuthService.isAdmin(user)) throw new Error("No autorizado");
 
     const lesson = {
       title: lessonData.title,
       slug: lessonData.slug || this.generateSlug(lessonData.title),
-      summary: lessonData.summary || '',
-      content: lessonData.content || '',
+      summary: lessonData.summary || "",
+      content: lessonData.content || "",
       order: lessonData.order || 999,
-      status: lessonData.status || 'draft',
+      status: lessonData.status || "draft",
       tags: lessonData.tags || [],
       author_email: user.email,
     };
 
     const { data, error } = await supabase
-      .from('lessons')
+      .from("lessons")
       .insert(lesson)
       .select()
       .single();
@@ -265,12 +269,12 @@ const LessonsService = {
    */
   async update(id, updates) {
     const user = await AuthService.getUser();
-    if (!AuthService.isAdmin(user)) throw new Error('No autorizado');
+    if (!AuthService.isAdmin(user)) throw new Error("No autorizado");
 
     const { data, error } = await supabase
-      .from('lessons')
+      .from("lessons")
       .update(updates)
-      .eq('id', id)
+      .eq("id", id)
       .select()
       .single();
 
@@ -283,12 +287,9 @@ const LessonsService = {
    */
   async delete(id) {
     const user = await AuthService.getUser();
-    if (!AuthService.isAdmin(user)) throw new Error('No autorizado');
+    if (!AuthService.isAdmin(user)) throw new Error("No autorizado");
 
-    const { error } = await supabase
-      .from('lessons')
-      .delete()
-      .eq('id', id);
+    const { error } = await supabase.from("lessons").delete().eq("id", id);
 
     if (error) throw new Error(error.message);
   },
@@ -297,7 +298,7 @@ const LessonsService = {
    * Cambiar entre published / draft
    */
   async toggleStatus(id, currentStatus) {
-    const newStatus = currentStatus === 'published' ? 'draft' : 'published';
+    const newStatus = currentStatus === "published" ? "draft" : "published";
     return this.update(id, { status: newStatus });
   },
 
@@ -306,11 +307,11 @@ const LessonsService = {
    */
   async reorder(lessons) {
     const user = await AuthService.getUser();
-    if (!AuthService.isAdmin(user)) throw new Error('No autorizado');
+    if (!AuthService.isAdmin(user)) throw new Error("No autorizado");
 
     // Supabase no tiene bulk update nativo, hacemos upsert
     const updates = lessons.map((l, i) => ({ id: l.id, order: i + 1 }));
-    const { error } = await supabase.from('lessons').upsert(updates);
+    const { error } = await supabase.from("lessons").upsert(updates);
     if (error) throw new Error(error.message);
   },
 
@@ -320,12 +321,12 @@ const LessonsService = {
   generateSlug(title) {
     return title
       .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')   // quitar acentos
-      .replace(/[^a-z0-9\s-]/g, '')
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "") // quitar acentos
+      .replace(/[^a-z0-9\s-]/g, "")
       .trim()
-      .replace(/\s+/g, '-');
-  }
+      .replace(/\s+/g, "-");
+  },
 };
 
 // ============================================
@@ -338,11 +339,11 @@ const CommentsService = {
    */
   async getByLesson(lessonId) {
     const { data, error } = await supabase
-      .from('comments')
-      .select('*')
-      .eq('lesson_id', lessonId)
-      .eq('approved', true)
-      .order('created_at', { ascending: true });
+      .from("comments")
+      .select("*")
+      .eq("lesson_id", lessonId)
+      .eq("approved", true)
+      .order("created_at", { ascending: true });
 
     if (error) throw new Error(error.message);
     return data || [];
@@ -352,17 +353,17 @@ const CommentsService = {
    * Publicar un comentario (requiere aprobación del admin)
    */
   async post(lessonId, { authorName, authorEmail, body }) {
-    if (!body?.trim()) throw new Error('El comentario no puede estar vacío');
-    if (!authorName?.trim()) throw new Error('Por favor añade tu nombre');
+    if (!body?.trim()) throw new Error("El comentario no puede estar vacío");
+    if (!authorName?.trim()) throw new Error("Por favor añade tu nombre");
 
     const { data, error } = await supabase
-      .from('comments')
+      .from("comments")
       .insert({
         lesson_id: lessonId,
         author_name: authorName.trim(),
         author_email: authorEmail?.trim() || null,
         body: body.trim(),
-        approved: false,  // Requiere aprobación
+        approved: false, // Requiere aprobación
       })
       .select()
       .single();
@@ -376,14 +377,14 @@ const CommentsService = {
    */
   async getAll(approvedOnly = false) {
     const user = await AuthService.getUser();
-    if (!AuthService.isAdmin(user)) throw new Error('No autorizado');
+    if (!AuthService.isAdmin(user)) throw new Error("No autorizado");
 
     let query = supabase
-      .from('comments')
+      .from("comments")
       .select(`*, lessons(title)`)
-      .order('created_at', { ascending: false });
+      .order("created_at", { ascending: false });
 
-    if (approvedOnly) query = query.eq('approved', true);
+    if (approvedOnly) query = query.eq("approved", true);
 
     const { data, error } = await query;
     if (error) throw new Error(error.message);
@@ -395,27 +396,24 @@ const CommentsService = {
    */
   async approve(id) {
     const user = await AuthService.getUser();
-    if (!AuthService.isAdmin(user)) throw new Error('No autorizado');
+    if (!AuthService.isAdmin(user)) throw new Error("No autorizado");
 
     const { error } = await supabase
-      .from('comments')
+      .from("comments")
       .update({ approved: true })
-      .eq('id', id);
+      .eq("id", id);
 
     if (error) throw new Error(error.message);
   },
 
   async delete(id) {
     const user = await AuthService.getUser();
-    if (!AuthService.isAdmin(user)) throw new Error('No autorizado');
+    if (!AuthService.isAdmin(user)) throw new Error("No autorizado");
 
-    const { error } = await supabase
-      .from('comments')
-      .delete()
-      .eq('id', id);
+    const { error } = await supabase.from("comments").delete().eq("id", id);
 
     if (error) throw new Error(error.message);
-  }
+  },
 };
 
 // ============================================
@@ -429,12 +427,12 @@ const AnalyticsService = {
   async trackView(page, lessonId = null) {
     try {
       // Rate limiting simple: no trackear si ya se registró en los últimos 10 min
-      const key = `ssp_view_${page}_${lessonId || 'none'}`;
+      const key = `ssp_view_${page}_${lessonId || "none"}`;
       const lastView = localStorage.getItem(key);
       const tenMinutes = 10 * 60 * 1000;
       if (lastView && Date.now() - parseInt(lastView) < tenMinutes) return;
 
-      await supabase.from('page_views').insert({
+      await supabase.from("page_views").insert({
         lesson_id: lessonId,
         page,
         referrer: document.referrer || null,
@@ -444,7 +442,7 @@ const AnalyticsService = {
       localStorage.setItem(key, Date.now().toString());
     } catch (e) {
       // Analytics nunca debe interrumpir la experiencia del usuario
-      console.warn('Analytics error (non-fatal):', e);
+      console.warn("Analytics error (non-fatal):", e);
     }
   },
 
@@ -453,25 +451,34 @@ const AnalyticsService = {
    */
   async getStats() {
     const user = await AuthService.getUser();
-    if (!AuthService.isAdmin(user)) throw new Error('No autorizado');
+    if (!AuthService.isAdmin(user)) throw new Error("No autorizado");
 
-    const [lessonsStats, viewsTotal, viewsByPage, recentViews] = await Promise.all([
-      // Stats por lección (usa la vista SQL)
-      supabase.from('lesson_stats').select('*').order('order', { ascending: true }),
+    const [lessonsStats, viewsTotal, viewsByPage, recentViews] =
+      await Promise.all([
+        // Stats por lección (usa la vista SQL)
+        supabase
+          .from("lesson_stats")
+          .select("*")
+          .order("order", { ascending: true }),
 
-      // Total de visitas
-      supabase.from('page_views').select('id', { count: 'exact', head: true }),
+        // Total de visitas
+        supabase
+          .from("page_views")
+          .select("id", { count: "exact", head: true }),
 
-      // Visitas agrupadas por página
-      supabase.rpc('views_by_page'),
+        // Visitas agrupadas por página
+        supabase.rpc("views_by_page"),
 
-      // Visitas de los últimos 30 días
-      supabase
-        .from('page_views')
-        .select('created_at, page')
-        .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
-        .order('created_at', { ascending: false })
-    ]);
+        // Visitas de los últimos 30 días
+        supabase
+          .from("page_views")
+          .select("created_at, page")
+          .gte(
+            "created_at",
+            new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+          )
+          .order("created_at", { ascending: false }),
+      ]);
 
     return {
       lessons: lessonsStats.data || [],
@@ -486,20 +493,22 @@ const AnalyticsService = {
    */
   async getViewsPerDay(days = 14) {
     const user = await AuthService.getUser();
-    if (!AuthService.isAdmin(user)) throw new Error('No autorizado');
+    if (!AuthService.isAdmin(user)) throw new Error("No autorizado");
 
-    const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+    const since = new Date(
+      Date.now() - days * 24 * 60 * 60 * 1000,
+    ).toISOString();
     const { data, error } = await supabase
-      .from('page_views')
-      .select('created_at')
-      .gte('created_at', since)
-      .order('created_at', { ascending: true });
+      .from("page_views")
+      .select("created_at")
+      .gte("created_at", since)
+      .order("created_at", { ascending: true });
 
     if (error) return [];
 
     // Agrupar por día
     const byDay = {};
-    (data || []).forEach(row => {
+    (data || []).forEach((row) => {
       const day = row.created_at.slice(0, 10); // YYYY-MM-DD
       byDay[day] = (byDay[day] || 0) + 1;
     });
@@ -512,7 +521,7 @@ const AnalyticsService = {
       result.push({ date: day, views: byDay[day] || 0 });
     }
     return result;
-  }
+  },
 };
 
 // ============================================
@@ -527,33 +536,33 @@ const ContactService = {
   async saveMessage(formData) {
     try {
       // Guardamos en la tabla messages si existe, si no, silently fail
-      await supabase.from('messages').insert({
+      await supabase.from("messages").insert({
         name: formData.name,
         email: formData.email,
         level: formData.level,
         message: formData.message,
       });
     } catch (e) {
-      console.warn('Contact backup save failed (non-fatal):', e);
+      console.warn("Contact backup save failed (non-fatal):", e);
     }
   },
 
   async getMessages() {
     const user = await AuthService.getUser();
-    if (!AuthService.isAdmin(user)) throw new Error('No autorizado');
+    if (!AuthService.isAdmin(user)) throw new Error("No autorizado");
 
     const { data, error } = await supabase
-      .from('messages')
-      .select('*')
-      .order('created_at', { ascending: false });
+      .from("messages")
+      .select("*")
+      .order("created_at", { ascending: false });
 
     if (error) throw new Error(error.message);
     return data || [];
-  }
+  },
 };
 
 // ============================================
 // AUTO-INIT
 // ============================================
 
-document.addEventListener('DOMContentLoaded', initSupabase);
+document.addEventListener("DOMContentLoaded", initSupabase);
