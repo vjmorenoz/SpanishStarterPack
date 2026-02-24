@@ -127,7 +127,7 @@ const SUPABASE_URL = "https://nobzewkdjmzqeyzozmdb.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_WIvtYTdwhX-5uEC1TaceEA_1qDZ-H13";
 
 // Emails con acceso al admin
-const ADMIN_EMAILS = ["victorj601@gmail.com"];
+const ADMIN_EMAILS = ["victorj601@gmail.com", "jmteach15@gmail.com"];
 
 // ============================================
 // INIT
