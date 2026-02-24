@@ -171,6 +171,19 @@ const AuthService = {
     if (error) throw new Error(error.message);
   },
 
+  async signInWithMagicLink(email) {
+    if (!ADMIN_EMAILS.includes(email)) {
+      throw new Error("Este email no tiene acceso al panel de admin.");
+    }
+    const { error } = await _db.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: window.location.origin + "/admin.html",
+      },
+    });
+    if (error) throw new Error(error.message);
+  },
+
   async signOut() {
     const { error } = await _db.auth.signOut();
     if (error) throw new Error(error.message);
