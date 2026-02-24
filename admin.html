@@ -818,6 +818,7 @@
         const el = document.getElementById("lessons-list");
         el.innerHTML =
           '<div class="loading"><div class="spinner"></div> Cargando...</div>';
+        await new Promise((r) => setTimeout(r, 400));
         try {
           const lessons = await LessonsService.getAll(false);
           if (!lessons.length) {
@@ -1002,6 +1003,7 @@
         const el = document.getElementById("comments-list");
         el.innerHTML =
           '<div class="loading"><div class="spinner"></div> Cargando...</div>';
+        await new Promise((r) => setTimeout(r, 400));
         try {
           const all = await CommentsService.getAll(false);
           const list = showAll ? all : all.filter((c) => !c.approved);
@@ -1066,6 +1068,7 @@
           '<div class="loading"><div class="spinner"></div></div>';
         document.getElementById("top-lessons-list").innerHTML =
           '<div class="loading"><div class="spinner"></div></div>';
+        await new Promise((r) => setTimeout(r, 400));
 
         try {
           const [stats, chartData] = await Promise.all([
