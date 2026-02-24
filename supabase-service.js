@@ -133,7 +133,7 @@ const ADMIN_EMAILS = ["victorj601@gmail.com", "jmteach15@gmail.com"];
 // INIT
 // ============================================
 
-let supabase;
+let _db;
 
 function initSupabase() {
   // Supabase v2 CDN expone el cliente como window.supabase.createClient
@@ -142,10 +142,10 @@ function initSupabase() {
     console.error("Supabase SDK no cargado. Revisa los script tags.");
     return false;
   }
-  supabase = sdk.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  _db = sdk.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   // Escuchar cambios de auth
-  supabase.auth.onAuthStateChange((event, session) => {
+  _db.auth.onAuthStateChange((event, session) => {
     document.dispatchEvent(
       new CustomEvent("authStateChanged", {
         detail: { user: session?.user ?? null, event },
@@ -162,7 +162,7 @@ function initSupabase() {
 
 const AuthService = {
   async signInWithGoogle() {
-    const { error } = await supabase.auth.signInWithOAuth({
+    const { error } = await _db.auth.signInWithOAuth({
       provider: "google",
       options: {
         redirectTo: window.location.origin + "/admin.html",
@@ -172,14 +172,14 @@ const AuthService = {
   },
 
   async signOut() {
-    const { error } = await supabase.auth.signOut();
+    const { error } = await _db.auth.signOut();
     if (error) throw new Error(error.message);
   },
 
   async getUser() {
     const {
       data: { user },
-    } = await supabase.auth.getUser();
+    } = await _db.auth.getUser();
     return user;
   },
 
@@ -197,7 +197,7 @@ const LessonsService = {
    * Obtener todas las lecciones publicadas
    */
   async getAll(publishedOnly = true) {
-    let query = supabase
+    let query = _db
       .from("lessons")
       .select("*")
       .order("order", { ascending: true });
@@ -215,7 +215,7 @@ const LessonsService = {
    * Obtener una lección por ID
    */
   async getById(id) {
-    const { data, error } = await supabase
+    const { data, error } = await _db
       .from("lessons")
       .select("*")
       .eq("id", id)
@@ -228,7 +228,7 @@ const LessonsService = {
    * Obtener una lección por slug
    */
   async getBySlug(slug) {
-    const { data, error } = await supabase
+    const { data, error } = await _db
       .from("lessons")
       .select("*")
       .eq("slug", slug)
@@ -256,7 +256,7 @@ const LessonsService = {
       author_email: user.email,
     };
 
-    const { data, error } = await supabase
+    const { data, error } = await _db
       .from("lessons")
       .insert(lesson)
       .select()
@@ -273,7 +273,7 @@ const LessonsService = {
     const user = await AuthService.getUser();
     if (!AuthService.isAdmin(user)) throw new Error("No autorizado");
 
-    const { data, error } = await supabase
+    const { data, error } = await _db
       .from("lessons")
       .update(updates)
       .eq("id", id)
@@ -291,7 +291,7 @@ const LessonsService = {
     const user = await AuthService.getUser();
     if (!AuthService.isAdmin(user)) throw new Error("No autorizado");
 
-    const { error } = await supabase.from("lessons").delete().eq("id", id);
+    const { error } = await _db.from("lessons").delete().eq("id", id);
 
     if (error) throw new Error(error.message);
   },
@@ -313,7 +313,7 @@ const LessonsService = {
 
     // Supabase no tiene bulk update nativo, hacemos upsert
     const updates = lessons.map((l, i) => ({ id: l.id, order: i + 1 }));
-    const { error } = await supabase.from("lessons").upsert(updates);
+    const { error } = await _db.from("lessons").upsert(updates);
     if (error) throw new Error(error.message);
   },
 
@@ -340,7 +340,7 @@ const CommentsService = {
    * Obtener comentarios aprobados de una lección
    */
   async getByLesson(lessonId) {
-    const { data, error } = await supabase
+    const { data, error } = await _db
       .from("comments")
       .select("*")
       .eq("lesson_id", lessonId)
@@ -358,7 +358,7 @@ const CommentsService = {
     if (!body?.trim()) throw new Error("El comentario no puede estar vacío");
     if (!authorName?.trim()) throw new Error("Por favor añade tu nombre");
 
-    const { data, error } = await supabase
+    const { data, error } = await _db
       .from("comments")
       .insert({
         lesson_id: lessonId,
@@ -381,7 +381,7 @@ const CommentsService = {
     const user = await AuthService.getUser();
     if (!AuthService.isAdmin(user)) throw new Error("No autorizado");
 
-    let query = supabase
+    let query = _db
       .from("comments")
       .select(`*, lessons(title)`)
       .order("created_at", { ascending: false });
@@ -400,7 +400,7 @@ const CommentsService = {
     const user = await AuthService.getUser();
     if (!AuthService.isAdmin(user)) throw new Error("No autorizado");
 
-    const { error } = await supabase
+    const { error } = await _db
       .from("comments")
       .update({ approved: true })
       .eq("id", id);
@@ -412,7 +412,7 @@ const CommentsService = {
     const user = await AuthService.getUser();
     if (!AuthService.isAdmin(user)) throw new Error("No autorizado");
 
-    const { error } = await supabase.from("comments").delete().eq("id", id);
+    const { error } = await _db.from("comments").delete().eq("id", id);
 
     if (error) throw new Error(error.message);
   },
@@ -434,7 +434,7 @@ const AnalyticsService = {
       const tenMinutes = 10 * 60 * 1000;
       if (lastView && Date.now() - parseInt(lastView) < tenMinutes) return;
 
-      await supabase.from("page_views").insert({
+      await _db.from("page_views").insert({
         lesson_id: lessonId,
         page,
         referrer: document.referrer || null,
@@ -458,21 +458,19 @@ const AnalyticsService = {
     const [lessonsStats, viewsTotal, viewsByPage, recentViews] =
       await Promise.all([
         // Stats por lección (usa la vista SQL)
-        supabase
+        _db
           .from("lesson_stats")
           .select("*")
           .order("order", { ascending: true }),
 
         // Total de visitas
-        supabase
-          .from("page_views")
-          .select("id", { count: "exact", head: true }),
+        _db.from("page_views").select("id", { count: "exact", head: true }),
 
         // Visitas agrupadas por página
-        supabase.rpc("views_by_page"),
+        _db.rpc("views_by_page"),
 
         // Visitas de los últimos 30 días
-        supabase
+        _db
           .from("page_views")
           .select("created_at, page")
           .gte(
@@ -500,7 +498,7 @@ const AnalyticsService = {
     const since = new Date(
       Date.now() - days * 24 * 60 * 60 * 1000,
     ).toISOString();
-    const { data, error } = await supabase
+    const { data, error } = await _db
       .from("page_views")
       .select("created_at")
       .gte("created_at", since)
@@ -538,7 +536,7 @@ const ContactService = {
   async saveMessage(formData) {
     try {
       // Guardamos en la tabla messages si existe, si no, silently fail
-      await supabase.from("messages").insert({
+      await _db.from("messages").insert({
         name: formData.name,
         email: formData.email,
         level: formData.level,
@@ -553,7 +551,7 @@ const ContactService = {
     const user = await AuthService.getUser();
     if (!AuthService.isAdmin(user)) throw new Error("No autorizado");
 
-    const { data, error } = await supabase
+    const { data, error } = await _db
       .from("messages")
       .select("*")
       .order("created_at", { ascending: false });
