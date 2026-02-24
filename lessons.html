@@ -122,32 +122,33 @@
     <script src="components.js"></script>
     <script>
       document.addEventListener("DOMContentLoaded", async () => {
+        await new Promise((r) => setTimeout(r, 500)); // esperar que Supabase inicie
         try {
           const lessons = await LessonsService.getAll(true);
           if (!lessons.length) return;
 
           const container = document.getElementById("dynamic-lessons");
           container.innerHTML = `
-          <div style="margin-bottom:20px;padding:12px 16px;background:var(--color-surface-2);border-radius:var(--radius-sm);border-left:3px solid var(--color-accent)">
-            <strong style="font-size:0.85rem;color:var(--color-accent)">NEW LESSONS</strong>
-            <span style="font-size:0.85rem;color:var(--color-text-muted);margin-left:8px">Latest content from the admin panel</span>
+        <div style="margin-bottom:20px;padding:12px 16px;background:var(--color-surface-2);border-radius:var(--radius-sm);border-left:3px solid var(--color-accent)">
+          <strong style="font-size:0.85rem;color:var(--color-accent)">NEW LESSONS</strong>
+          <span style="font-size:0.85rem;color:var(--color-text-muted);margin-left:8px">Latest content from the admin panel</span>
+        </div>
+        ${lessons
+          .map(
+            (l) => `
+          <div class="article">
+            <h2>${l.title}</h2>
+            <p>${l.summary || ""}</p>
+            ${(l.tags || []).map((t) => `<span class="lesson-tag" style="margin-right:4px">${t}</span>`).join("")}
+            <br>
+            <a href="lesson.html?slug=${l.slug}" class="read-more">Read More →</a>
           </div>
-          ${lessons
-            .map(
-              (l) => `
-            <div class="article">
-              <h2>${l.title}</h2>
-              <p>${l.summary || ""}</p>
-              ${(l.tags || []).map((t) => `<span class="lesson-tag" style="margin-right:4px">${t}</span>`).join("")}
-              <br>
-              <a href="lesson.html?slug=${l.slug}" class="read-more">Read More →</a>
-            </div>
-          `,
-            )
-            .join("")}
-          <hr style="border:none;border-top:2px solid var(--color-border);margin:24px 0">
-          <p style="font-size:0.85rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--color-text-light);margin-bottom:16px">Classic Lessons</p>
-        `;
+        `,
+          )
+          .join("")}
+        <hr style="border:none;border-top:2px solid var(--color-border);margin:24px 0">
+        <p style="font-size:0.85rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--color-text-light);margin-bottom:16px">Classic Lessons</p>
+      `;
         } catch (e) {
           console.info("No se pudieron cargar lecciones dinámicas:", e.message);
         }
