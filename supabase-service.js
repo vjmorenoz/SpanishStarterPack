@@ -136,11 +136,13 @@ const ADMIN_EMAILS = ["victorj601@gmail.com", "jmteach15@gmail.com"];
 let supabase;
 
 function initSupabase() {
-  if (typeof window.supabase === "undefined") {
+  // Supabase v2 CDN expone el cliente como window.supabase.createClient
+  const sdk = window.supabase;
+  if (!sdk || typeof sdk.createClient !== "function") {
     console.error("Supabase SDK no cargado. Revisa los script tags.");
     return false;
   }
-  supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  supabase = sdk.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   // Escuchar cambios de auth
   supabase.auth.onAuthStateChange((event, session) => {
@@ -562,7 +564,14 @@ const ContactService = {
 };
 
 // ============================================
-// AUTO-INIT
+// AUTO-INIT — Inmediato, no espera DOMContentLoaded
+// Garantiza que supabase, AuthService, etc. estén listos
+// antes de que admin.html intente usarlos.
 // ============================================
 
-document.addEventListener("DOMContentLoaded", initSupabase);
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initSupabase);
+} else {
+  // El DOM ya está listo (script cargado de forma diferida)
+  initSupabase();
+}
