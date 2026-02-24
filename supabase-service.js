@@ -184,6 +184,14 @@ const AuthService = {
     if (error) throw new Error(error.message);
   },
 
+  async signInWithPassword(email, password) {
+    if (!ADMIN_EMAILS.includes(email)) {
+      throw new Error("Este email no tiene acceso al panel de admin.");
+    }
+    const { error } = await _db.auth.signInWithPassword({ email, password });
+    if (error) throw new Error(error.message);
+  },
+
   async signOut() {
     const { error } = await _db.auth.signOut();
     if (error) throw new Error(error.message);
