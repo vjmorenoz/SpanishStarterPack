@@ -931,26 +931,32 @@
       }
 
       async function deleteLesson(id, title) {
-        if (!confirm(`¿Borrar "${title}"? Esta acción no se puede deshacer.`)) return;
-        try {
-        await LessonsService.delete(id);
-        showToast('Lección borrada');
-        loadLessons();
-        } catch(e) {
-          showToast(e.message, 'error');
+        // Llamada desde el listado (con id y title)
+        if (id && title) {
+          if (!confirm(`¿Borrar "${title}"? Esta acción no se puede deshacer.`))
+            return;
+          try {
+            await LessonsService.delete(id);
+            showToast("Lección borrada");
+            loadLessons();
+          } catch (e) {
+            showToast(e.message, "error");
+          }
+          return;
         }
-      }
-        const id = document.getElementById("editing-lesson-id").value;
-        if (!id || !confirm("¿Eliminar esta lección permanentemente?")) return;
+        // Llamada desde el editor (sin parámetros)
+        const editId = document.getElementById("editing-lesson-id").value;
+        if (!editId || !confirm("¿Eliminar esta lección permanentemente?"))
+          return;
         try {
-          await LessonsService.delete(id);
+          await LessonsService.delete(editId);
           showToast("Lección eliminada");
           resetEditor();
           showSection("lessons");
         } catch (e) {
           showToast("Error: " + e.message, "error");
         }
-
+      }
 
       function autoSlug() {
         if (document.getElementById("editing-lesson-id").value) return;
