@@ -823,6 +823,10 @@
               onclick="toggleStatus('${l.id}','${l.status}')">
               ${l.status === "published" ? "Despublicar" : "🚀 Publicar"}
             </button>
+            <button class="btn btn-secondary" style="font-size:0.82rem;padding:7px 14px;color:#e05252;border-color:#e05252"
+              onclick="deleteLesson('${l.id}','${l.title}')">
+              🗑️
+            </button>
           </div>
         </div>`,
             )
@@ -926,7 +930,16 @@
         }
       }
 
-      async function deleteLesson() {
+      async function deleteLesson(id, title) {
+        if (!confirm(`¿Borrar "${title}"? Esta acción no se puede deshacer.`)) return;
+        try {
+        await LessonsService.delete(id);
+        showToast('Lección borrada');
+        loadLessons();
+        } catch(e) {
+          showToast(e.message, 'error');
+        }
+      }
         const id = document.getElementById("editing-lesson-id").value;
         if (!id || !confirm("¿Eliminar esta lección permanentemente?")) return;
         try {
@@ -937,7 +950,7 @@
         } catch (e) {
           showToast("Error: " + e.message, "error");
         }
-      }
+
 
       function autoSlug() {
         if (document.getElementById("editing-lesson-id").value) return;
