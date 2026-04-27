@@ -1,72 +1,104 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Contact — Spanish Starter Pack</title>
-  <link rel="stylesheet" href="styles.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@200..700&family=Quicksand:wght@300..700&display=swap" rel="stylesheet">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Contact — Spanish Starter Pack</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Oswald:wght@200..700&family=Quicksand:wght@300..700&display=swap"
+      rel="stylesheet"
+    />
 
-  <!-- Firebase (optional — saves messages to Firestore as backup) -->
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-</head>
-<body data-page="contact">
+    <!-- Firebase (optional — saves messages to Firestore as backup) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  </head>
+  <body data-page="contact">
+    <section class="form-section" style="margin-top: 40px">
+      <h2>📅 Book a Class or Contact Me</h2>
+      <p
+        style="
+          text-align: center;
+          color: var(--color-text-muted);
+          margin-bottom: 24px;
+          font-size: 0.9rem;
+        "
+      >
+        I'll get back to you as soon as possible!
+      </p>
+      <form
+        id="contact-form"
+        action="https://formspree.io/f/mzzgjdkz"
+        method="POST"
+      >
+        <label for="name">Full name</label>
+        <input
+          type="text"
+          name="name"
+          id="name"
+          placeholder="Pedro Pérez"
+          required
+        />
 
-  <section class="form-section" style="margin-top:40px">
-    <h2>📅 Book a Class or Contact Me</h2>
-    <p style="text-align:center;color:var(--color-text-muted);margin-bottom:24px;font-size:0.9rem">
-      I'll get back to you as soon as possible!
-    </p>
-    <form id="contact-form" action="https://formspree.io/f/mzzgjdkz" method="POST">
-      <label for="name">Full name</label>
-      <input type="text" name="name" id="name" placeholder="Pedro Pérez" required>
+        <label for="email">E-mail</label>
+        <input
+          type="email"
+          name="email"
+          id="email"
+          placeholder="your@email.com"
+          required
+        />
 
-      <label for="email">E-mail</label>
-      <input type="email" name="email" id="email" placeholder="your@email.com" required>
+        <label for="level">Spanish level</label>
+        <select name="level" id="level" required>
+          <option value="" disabled selected>Select your level...</option>
+          <option value="beginner">Beginner — just starting out</option>
+          <option value="intermediate">
+            Intermediate — can have basic conversations
+          </option>
+          <option value="advanced">Advanced — fluent but want to refine</option>
+        </select>
 
-      <label for="level">Spanish level</label>
-      <select name="level" id="level" required>
-        <option value="" disabled selected>Select your level...</option>
-        <option value="beginner">Beginner — just starting out</option>
-        <option value="intermediate">Intermediate — can have basic conversations</option>
-        <option value="advanced">Advanced — fluent but want to refine</option>
-      </select>
+        <label for="message">Comments or questions</label>
+        <textarea
+          name="message"
+          id="message"
+          rows="5"
+          placeholder="I would like to learn Spanish because..."
+        ></textarea>
 
-      <label for="message">Comments or questions</label>
-      <textarea name="message" id="message" rows="5"
-        placeholder="I would like to learn Spanish because..."></textarea>
+        <button type="submit" id="submit-btn">Send Message 📨</button>
+      </form>
+    </section>
 
-      <button type="submit" id="submit-btn">Send Message 📨</button>
-    </form>
-  </section>
+    <script src="components.js"></script>
+    <script>
+      document
+        .getElementById("contact-form")
+        .addEventListener("submit", async function (e) {
+          // Don't prevent default — Formspree handles the actual submission
+          const btn = document.getElementById("submit-btn");
+          btn.textContent = "Sending...";
+          btn.disabled = true;
 
-  <script src="firebase-service.js"></script>
-  <script src="components.js"></script>
-  <script>
-    document.getElementById('contact-form').addEventListener('submit', async function(e) {
-      // Don't prevent default — Formspree handles the actual submission
-      const btn = document.getElementById('submit-btn');
-      btn.textContent = 'Sending...';
-      btn.disabled = true;
-
-      // Save to Firestore as backup (if Firebase is configured)
-      try {
-        await new Promise(resolve => setTimeout(resolve, 400));
-        const formData = {
-          name: document.getElementById('name').value,
-          email: document.getElementById('email').value,
-          level: document.getElementById('level').value,
-          message: document.getElementById('message').value,
-        };
-        ContactService.saveMessage(formData);
-      } catch (err) {
-        // Silently fail — Formspree is the real handler
-      }
-    });
-  </script>
-</body>
+          // Save to Firestore as backup (if Firebase is configured)
+          try {
+            await new Promise((resolve) => setTimeout(resolve, 400));
+            const formData = {
+              name: document.getElementById("name").value,
+              email: document.getElementById("email").value,
+              level: document.getElementById("level").value,
+              message: document.getElementById("message").value,
+            };
+            ContactService.saveMessage(formData);
+          } catch (err) {
+            // Silently fail — Formspree is the real handler
+          }
+        });
+    </script>
+  </body>
 </html>

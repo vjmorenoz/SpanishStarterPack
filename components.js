@@ -9,10 +9,10 @@
 // ============================================
 
 const ThemeManager = {
-  key: 'ssp-theme',
+  key: "ssp-theme",
 
   get() {
-    return localStorage.getItem(this.key) || 'auto';
+    return localStorage.getItem(this.key) || "auto";
   },
 
   set(theme) {
@@ -21,27 +21,29 @@ const ThemeManager = {
   },
 
   apply(theme) {
-    if (theme === 'dark') {
-      document.documentElement.setAttribute('data-theme', 'dark');
-    } else if (theme === 'light') {
-      document.documentElement.setAttribute('data-theme', 'light');
+    if (theme === "dark") {
+      document.documentElement.setAttribute("data-theme", "dark");
+    } else if (theme === "light") {
+      document.documentElement.setAttribute("data-theme", "light");
     } else {
-      document.documentElement.removeAttribute('data-theme');
+      document.documentElement.removeAttribute("data-theme");
     }
   },
 
   toggle() {
     const current = this.get();
-    const isDark = current === 'dark' ||
-      (current === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-    const next = isDark ? 'light' : 'dark';
+    const isDark =
+      current === "dark" ||
+      (current === "auto" &&
+        window.matchMedia("(prefers-color-scheme: dark)").matches);
+    const next = isDark ? "light" : "dark";
     this.set(next);
     return next;
   },
 
   init() {
     this.apply(this.get());
-  }
+  },
 };
 
 // Apply theme immediately (before DOM to prevent flash)
@@ -51,23 +53,34 @@ ThemeManager.init();
 // NAVBAR
 // ============================================
 
-function renderNavbar(activePage = '') {
+function renderNavbar(activePage = "") {
   const pages = [
-    { href: 'index.html', label: 'Home', key: 'home', className: 'home' },
-    { href: 'lessons.html', label: 'Lessons', key: 'lessons' },
-    { href: '#', label: 'Tips', key: 'tips' },
-    { href: 'contact.html', label: 'Contact', key: 'contact' },
-    { href: 'Donate.html', label: 'Donate', key: 'donate', className: 'donate' },
+    { href: "index.html", label: "Home", key: "home", className: "home" },
+    { href: "lessons.html", label: "Lessons", key: "lessons" },
+    { href: "lessons.html", label: "Tips", key: "tips" },
+    { href: "contact.html", label: "Contact", key: "contact" },
+    {
+      href: "Donate.html",
+      label: "Donate",
+      key: "donate",
+      className: "donate",
+    },
   ];
 
-  const links = pages.map(p => {
-    const cls = [p.className, activePage === p.key ? 'active' : ''].filter(Boolean).join(' ');
-    return `<a href="${p.href}" class="${cls}">${p.label}</a>`;
-  }).join('');
+  const links = pages
+    .map((p) => {
+      const cls = [p.className, activePage === p.key ? "active" : ""]
+        .filter(Boolean)
+        .join(" ");
+      return `<a href="${p.href}" class="${cls}">${p.label}</a>`;
+    })
+    .join("");
 
-  const isDark = ThemeManager.get() === 'dark' ||
-    (ThemeManager.get() === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-  const themeIcon = isDark ? '☀️' : '🌙';
+  const isDark =
+    ThemeManager.get() === "dark" ||
+    (ThemeManager.get() === "auto" &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches);
+  const themeIcon = isDark ? "☀️" : "🌙";
 
   const html = `
     <nav class="navbar">
@@ -85,21 +98,22 @@ function renderNavbar(activePage = '') {
   `;
 
   // Create header element if it doesn't exist
-  let header = document.querySelector('header') || document.createElement('header');
+  let header =
+    document.querySelector("header") || document.createElement("header");
   header.innerHTML = html;
-  if (!document.querySelector('header')) {
+  if (!document.querySelector("header")) {
     document.body.prepend(header);
   }
 
   // Attach events
-  document.getElementById('menu-toggle').addEventListener('click', () => {
-    document.getElementById('nav-links').classList.toggle('show');
+  document.getElementById("menu-toggle").addEventListener("click", () => {
+    document.getElementById("nav-links").classList.toggle("show");
   });
 
-  document.getElementById('theme-toggle').addEventListener('click', () => {
+  document.getElementById("theme-toggle").addEventListener("click", () => {
     const next = ThemeManager.toggle();
-    const isDarkNow = next === 'dark';
-    document.getElementById('theme-icon').textContent = isDarkNow ? '☀️' : '🌙';
+    const isDarkNow = next === "dark";
+    document.getElementById("theme-icon").textContent = isDarkNow ? "☀️" : "🌙";
   });
 }
 
@@ -121,9 +135,9 @@ function renderFooter() {
           <h3>Lessons</h3>
           <ul style="list-style:none;padding:0;display:flex;flex-direction:column;gap:8px">
             <li><a href="lessons.html">All Lessons</a></li>
-            <li><a href="1-Basic-intro.html">Basic Introduction</a></li>
-            <li><a href="2-Conjugations.html">Conjugations</a></li>
-            <li><a href="3-Basic-sentence-structures.html">Sentence Structures</a></li>
+            <li><a href="lessons.html">Basic Introduction</a></li>
+            <li><a href="lessons.html">Conjugations</a></li>
+            <li><a href="lessons.html">Sentence Structures</a></li>
           </ul>
         </div>
         <div class="footer-column">
@@ -142,7 +156,7 @@ function renderFooter() {
     </footer>
   `;
 
-  const footer = document.createElement('div');
+  const footer = document.createElement("div");
   footer.innerHTML = html;
   document.body.appendChild(footer.firstElementChild);
 }
@@ -152,14 +166,14 @@ function renderFooter() {
 // ============================================
 
 function loadKofi() {
-  const script = document.createElement('script');
-  script.src = 'https://storage.ko-fi.com/cdn/scripts/overlay-widget.js';
+  const script = document.createElement("script");
+  script.src = "https://storage.ko-fi.com/cdn/scripts/overlay-widget.js";
   script.onload = () => {
-    kofiWidgetOverlay.draw('spanishstarterpack', {
-      'type': 'floating-chat',
-      'floating-chat.donateButton.text': 'Support me',
-      'floating-chat.donateButton.background-color': '#c8a84b',
-      'floating-chat.donateButton.text-color': '#1a1814'
+    kofiWidgetOverlay.draw("spanishstarterpack", {
+      type: "floating-chat",
+      "floating-chat.donateButton.text": "Support me",
+      "floating-chat.donateButton.background-color": "#c8a84b",
+      "floating-chat.donateButton.text-color": "#1a1814",
     });
   };
   document.body.appendChild(script);
@@ -169,21 +183,21 @@ function loadKofi() {
 // TOAST NOTIFICATIONS
 // ============================================
 
-function showToast(message, type = 'success', duration = 3500) {
-  const existing = document.querySelector('.toast');
+function showToast(message, type = "success", duration = 3500) {
+  const existing = document.querySelector(".toast");
   if (existing) existing.remove();
 
-  const toast = document.createElement('div');
+  const toast = document.createElement("div");
   toast.className = `toast ${type}`;
   toast.textContent = message;
   document.body.appendChild(toast);
 
   requestAnimationFrame(() => {
-    requestAnimationFrame(() => toast.classList.add('show'));
+    requestAnimationFrame(() => toast.classList.add("show"));
   });
 
   setTimeout(() => {
-    toast.classList.remove('show');
+    toast.classList.remove("show");
     setTimeout(() => toast.remove(), 350);
   }, duration);
 }
@@ -192,9 +206,9 @@ function showToast(message, type = 'success', duration = 3500) {
 // AUTO-INIT on DOM Ready
 // ============================================
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener("DOMContentLoaded", () => {
   // Get active page from body data attribute or URL
-  const activePage = document.body.dataset.page || '';
+  const activePage = document.body.dataset.page || "";
   renderNavbar(activePage);
   renderFooter();
   loadKofi();

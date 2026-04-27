@@ -36,91 +36,21 @@
 
         <!-- Lecciones dinámicas de Supabase -->
         <div id="dynamic-lessons"></div>
-
-        <!-- Lecciones estáticas (siempre visibles) 
-        <div id="static-lessons">
-          <div class="article">
-            <h2>Lesson 1: Basic Introduction to Spanish</h2>
-            <p>
-              Spanish is one of the most widely spoken languages, with over 500
-              million native speakers! It comes from Latin and is part of the
-              Romance language family, along with French, Italian, and
-              Portuguese. In this lesson, you'll learn what makes Spanish
-              unique, from its alphabet to its verb conjugations. ¡Vamos!
-            </p>
-            <a href="1-Basic-intro.html" class="read-more">Read More →</a>
-          </div>
-          <div class="article">
-            <h2>Lesson 2: Conjugations</h2>
-            <p>
-              Spanish verbs change their endings based on who's doing the action
-              and when it's happening — this is called conjugation. There are
-              three main verb types: -ar, -er, and -ir, each with their own
-              patterns. Once you learn the endings, you can start forming real
-              sentences!
-            </p>
-            <a href="2-Conjugations.html" class="read-more">Read More →</a>
-          </div>
-          <div class="article">
-            <h2>Lesson 3: The Basic Structure of Sentences</h2>
-            <p>
-              Spanish usually follows a subject-verb-object order, but it's
-              flexible! You can often drop the subject if the verb makes it
-              clear who's acting. Mastering these patterns helps you sound more
-              natural and expressive.
-            </p>
-            <a href="3-Basic-sentence-structures.html" class="read-more"
-              >Read More →</a
-            >
-          </div>
-          <div class="article">
-            <h2>Lesson 4: Spanish Pronunciation</h2>
-            <p>
-              Spanish pronunciation is refreshingly consistent — words are
-              pronounced just as they're written! In this lesson, you'll
-              discover how Spanish vowels always keep the same sound, how to
-              handle the "ñ," and why word stress matters.
-            </p>
-            <a href="4-Spanish-pronuntiation.html" class="read-more"
-              >Read More →</a
-            >
-          </div>
-          <div class="article">
-            <h2>Lesson 16: Imperfect Past vs. Simple Past</h2>
-            <p>
-              Spanish has two main ways to talk about the past: the preterite
-              and the imperfect. The preterite is for finished actions. The
-              imperfect is for things that used to happen or were ongoing.
-              Mastering this difference will make your stories flow naturally!
-            </p>
-            <a href="Imperfecto-vs-simple.html" class="read-more"
-              >Read More →</a
-            >
-          </div>
-
-          <div
-            style="
-              margin-top: 8px;
-              padding: 20px;
-              background: var(--color-surface-2);
-              border-radius: var(--radius-md);
-              text-align: center;
-              color: var(--color-text-muted);
-            "
-          >
-            <p style="font-size: 1.5rem; margin-bottom: 8px">🚧</p>
-            <p>
-              <strong>More lessons coming soon!</strong> Lessons 5–15 are in
-              development.
-            </p>
-          </div>
-        </div>-->
       </div>
     </div>
 
     <script src="supabase-service.js"></script>
     <script src="components.js"></script>
     <script>
+      function escapeHtml(value) {
+        return String(value ?? "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#39;");
+      }
+
       document.addEventListener("DOMContentLoaded", async () => {
         await new Promise((r) => setTimeout(r, 500)); // esperar que Supabase inicie
         try {
@@ -137,11 +67,11 @@
           .map(
             (l) => `
           <div class="article">
-            <h2>${l.title}</h2>
-            <p>${l.summary || ""}</p>
-            ${(l.tags || []).map((t) => `<span class="lesson-tag" style="margin-right:4px">${t}</span>`).join("")}
+            <h2>${escapeHtml(l.title)}</h2>
+            <p>${escapeHtml(l.summary || "")}</p>
+            ${(l.tags || []).map((t) => `<span class="lesson-tag" style="margin-right:4px">${escapeHtml(t)}</span>`).join("")}
             <br>
-            <a href="lesson.html?slug=${l.slug}" class="read-more">Read More →</a>
+            <a href="lesson.html?slug=${encodeURIComponent(l.slug || "")}" class="read-more">Read More →</a>
           </div>
         `,
           )
