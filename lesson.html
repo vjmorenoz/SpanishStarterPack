@@ -1,86 +1,162 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title id="page-title">Lección — Spanish Starter Pack</title>
-  <link rel="stylesheet" href="styles.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@200..700&family=Quicksand:wght@300..700&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title id="page-title">Lección — Spanish Starter Pack</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Oswald:wght@200..700&family=Quicksand:wght@300..700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
-  <style>
-    .comments-section { margin-top: 40px; padding-top: 28px; border-top: 2px solid var(--color-border); }
-    .comment-item { padding: 16px 0; border-bottom: 1px solid var(--color-border); }
-    .comment-item:last-child { border-bottom: none; }
-    .comment-author { font-weight: 700; font-size: 0.95rem; margin-bottom: 2px; }
-    .comment-date { font-size: 0.78rem; color: var(--color-text-light); margin-bottom: 8px; }
-    .comment-body { color: var(--color-text-muted); line-height: 1.65; font-size: 0.93rem; }
-    .comment-form { margin-top: 28px; background: var(--color-surface-2); border-radius: var(--radius-md); padding: 24px; }
-    .comment-form h3 { margin-bottom: 8px; font-family: var(--font-display); }
-    .comment-form input, .comment-form textarea {
-      width: 100%; padding: 10px 14px; border-radius: var(--radius-sm);
-      border: 1.5px solid var(--color-border); background: var(--color-surface);
-      color: var(--color-text); font-family: var(--font-body); font-size: 0.93rem;
-      margin-bottom: 12px; transition: border-color var(--transition); display: block;
-    }
-    .comment-form input:focus, .comment-form textarea:focus { outline: none; border-color: var(--color-accent); }
-    .comment-form textarea { resize: vertical; min-height: 100px; }
-    .lesson-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 32px; padding-top: 20px; border-top: 1px solid var(--color-border); flex-wrap: wrap; gap: 12px; }
-    .lesson-nav a { color: var(--color-text-muted); font-size: 0.9rem; transition: color var(--transition); }
-    .lesson-nav a:hover { color: var(--color-text); }
-  </style>
-</head>
-<body data-page="lessons">
-
-  <div class="container" style="margin-top:28px">
-    <div class="articles-lesson" id="lesson-wrapper">
-      <div class="loading"><div class="spinner"></div> Cargando lección...</div>
-    </div>
-  </div>
-
-  <script src="supabase-service.js"></script>
-  <script src="components.js"></script>
-  <script>
-    const params = new URLSearchParams(window.location.search);
-    const slug = params.get('slug');
-    const lessonId = params.get('id');
-    let currentLessonId = null;
-
-    document.addEventListener('DOMContentLoaded', async () => {
-      if (!slug && !lessonId) {
-        showError('No se especificó ninguna lección. <a href="lessons.html">Ver todas →</a>');
-        return;
+    <style>
+      .comments-section {
+        margin-top: 40px;
+        padding-top: 28px;
+        border-top: 2px solid var(--color-border);
       }
-      await new Promise(r => setTimeout(r, 700));
-      try {
-        const lesson = slug
-          ? await LessonsService.getBySlug(slug)
-          : await LessonsService.getById(lessonId);
+      .comment-item {
+        padding: 16px 0;
+        border-bottom: 1px solid var(--color-border);
+      }
+      .comment-item:last-child {
+        border-bottom: none;
+      }
+      .comment-author {
+        font-weight: 700;
+        font-size: 0.95rem;
+        margin-bottom: 2px;
+      }
+      .comment-date {
+        font-size: 0.78rem;
+        color: var(--color-text-light);
+        margin-bottom: 8px;
+      }
+      .comment-body {
+        color: var(--color-text-muted);
+        line-height: 1.65;
+        font-size: 0.93rem;
+      }
+      .comment-form {
+        margin-top: 28px;
+        background: var(--color-surface-2);
+        border-radius: var(--radius-md);
+        padding: 24px;
+      }
+      .comment-form h3 {
+        margin-bottom: 8px;
+        font-family: var(--font-display);
+      }
+      .comment-form input,
+      .comment-form textarea {
+        width: 100%;
+        padding: 10px 14px;
+        border-radius: var(--radius-sm);
+        border: 1.5px solid var(--color-border);
+        background: var(--color-surface);
+        color: var(--color-text);
+        font-family: var(--font-body);
+        font-size: 0.93rem;
+        margin-bottom: 12px;
+        transition: border-color var(--transition);
+        display: block;
+      }
+      .comment-form input:focus,
+      .comment-form textarea:focus {
+        outline: none;
+        border-color: var(--color-accent);
+      }
+      .comment-form textarea {
+        resize: vertical;
+        min-height: 100px;
+      }
+      .lesson-nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 32px;
+        padding-top: 20px;
+        border-top: 1px solid var(--color-border);
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+      .lesson-nav a {
+        color: var(--color-text-muted);
+        font-size: 0.9rem;
+        transition: color var(--transition);
+      }
+      .lesson-nav a:hover {
+        color: var(--color-text);
+      }
+    </style>
+  </head>
+  <body data-page="lessons">
+    <div class="container" style="margin-top: 28px">
+      <div class="articles-lesson" id="lesson-wrapper">
+        <div class="loading">
+          <div class="spinner"></div>
+          Cargando lección...
+        </div>
+      </div>
+    </div>
 
-        if (!lesson || lesson.status !== 'published') {
-          showError('Lección no encontrada. <a href="lessons.html">Ver todas las lecciones →</a>');
+    <script src="supabase-service.js"></script>
+    <script src="components.js"></script>
+    <script>
+      const params = new URLSearchParams(window.location.search);
+      const slug = params.get("slug");
+      const lessonId = params.get("id");
+      let currentLessonId = null;
+
+      document.addEventListener("DOMContentLoaded", async () => {
+        if (!slug && !lessonId) {
+          showError(
+            'No se especificó ninguna lección. <a href="lessons.html">Ver todas →</a>',
+          );
           return;
         }
-        currentLessonId = lesson.id;
-        renderLesson(lesson);
-        AnalyticsService.trackView('lesson', lesson.id);
-        loadComments(lesson.id);
-      } catch(e) {
-        showError('Error cargando la lección: ' + e.message);
-      }
-    });
+        await new Promise((r) => setTimeout(r, 700));
+        try {
+          const lesson = slug
+            ? await LessonsService.getBySlug(slug)
+            : await LessonsService.getById(lessonId);
 
-    function renderLesson(lesson) {
-      document.getElementById('page-title').textContent = `${lesson.title} — Spanish Starter Pack`;
-      const tags = (lesson.tags||[]).map(t => `<span class="lesson-tag">${t}</span>`).join('');
-      const html = marked.parse(lesson.content || '');
-      const date = lesson.updated_at
-        ? new Date(lesson.updated_at).toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'}) : '';
+          if (!lesson || lesson.status !== "published") {
+            showError(
+              'Lección no encontrada. <a href="lessons.html">Ver todas las lecciones →</a>',
+            );
+            return;
+          }
+          currentLessonId = lesson.id;
+          renderLesson(lesson);
+          AnalyticsService.trackView("lesson", lesson.id);
+          loadComments(lesson.id);
+        } catch (e) {
+          showError("Error cargando la lección: " + e.message);
+        }
+      });
 
-      document.getElementById('lesson-wrapper').innerHTML = `
+      function renderLesson(lesson) {
+        document.getElementById("page-title").textContent =
+          `${lesson.title} — Spanish Starter Pack`;
+        const tags = (lesson.tags || [])
+          .map((t) => `<span class="lesson-tag">${escHtml(t)}</span>`)
+          .join("");
+        const html = sanitizeHtml(marked.parse(lesson.content || ""));
+        const date = lesson.updated_at
+          ? new Date(lesson.updated_at).toLocaleDateString("es-ES", {
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+            })
+          : "";
+
+        document.getElementById("lesson-wrapper").innerHTML = `
         <div class="article">
           <div style="margin-bottom:16px">${tags}</div>
           <div class="lesson-content">${html}</div>
@@ -91,26 +167,30 @@
         </div>
         <div id="comments-container"></div>
       `;
-    }
+      }
 
-    async function loadComments(lid) {
-      const container = document.getElementById('comments-container');
-      if (!container) return;
-      try {
-        const comments = await CommentsService.getByLesson(lid);
-        const list = comments.length
-          ? comments.map(c => `
+      async function loadComments(lid) {
+        const container = document.getElementById("comments-container");
+        if (!container) return;
+        try {
+          const comments = await CommentsService.getByLesson(lid);
+          const list = comments.length
+            ? comments
+                .map(
+                  (c) => `
             <div class="comment-item">
               <div class="comment-author">${escHtml(c.author_name)}</div>
-              <div class="comment-date">${new Date(c.created_at).toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'})}</div>
+              <div class="comment-date">${new Date(c.created_at).toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" })}</div>
               <div class="comment-body">${escHtml(c.body)}</div>
-            </div>`).join('')
-          : '<p style="color:var(--color-text-light);font-size:0.9rem">Sé el primero en comentar 👇</p>';
+            </div>`,
+                )
+                .join("")
+            : '<p style="color:var(--color-text-light);font-size:0.9rem">Sé el primero en comentar 👇</p>';
 
-        container.innerHTML = `
+          container.innerHTML = `
           <div class="comments-section">
             <h2 style="font-family:var(--font-display);margin-bottom:20px">
-              Comentarios ${comments.length ? `<span style="font-size:1rem;font-weight:400;color:var(--color-text-muted)">(${comments.length})</span>` : ''}
+              Comentarios ${comments.length ? `<span style="font-size:1rem;font-weight:400;color:var(--color-text-muted)">(${comments.length})</span>` : ""}
             </h2>
             <div id="comments-list">${list}</div>
             <div class="comment-form">
@@ -126,40 +206,61 @@
               </button>
             </div>
           </div>`;
-      } catch(e) {
-        container.innerHTML = '';
+        } catch (e) {
+          container.innerHTML = "";
+        }
       }
-    }
 
-    async function submitComment() {
-      const name = document.getElementById('comment-name')?.value?.trim();
-      const email = document.getElementById('comment-email')?.value?.trim();
-      const body = document.getElementById('comment-body')?.value?.trim();
-      if (!name || !body) { showToastL('Completa tu nombre y comentario.', 'error'); return; }
-      try {
-        await CommentsService.post(currentLessonId, { authorName: name, authorEmail: email, body });
-        showToastL('¡Comentario enviado! Aparecerá tras revisión ✅');
-        ['comment-name','comment-email','comment-body'].forEach(id => document.getElementById(id).value = '');
-      } catch(e) { showToastL('Error: ' + e.message, 'error'); }
-    }
+      async function submitComment() {
+        const name = document.getElementById("comment-name")?.value?.trim();
+        const email = document.getElementById("comment-email")?.value?.trim();
+        const body = document.getElementById("comment-body")?.value?.trim();
+        if (!name || !body) {
+          showToastL("Completa tu nombre y comentario.", "error");
+          return;
+        }
+        try {
+          await CommentsService.post(currentLessonId, {
+            authorName: name,
+            authorEmail: email,
+            body,
+          });
+          showToastL("¡Comentario enviado! Aparecerá tras revisión ✅");
+          ["comment-name", "comment-email", "comment-body"].forEach(
+            (id) => (document.getElementById(id).value = ""),
+          );
+        } catch (e) {
+          showToastL("Error: " + e.message, "error");
+        }
+      }
 
-    function showError(msg) {
-      document.getElementById('lesson-wrapper').innerHTML =
-        `<div class="empty-state"><h3>¡Oops!</h3><p>${msg}</p></div>`;
-    }
+      function showError(msg) {
+        document.getElementById("lesson-wrapper").innerHTML =
+          `<div class="empty-state"><h3>¡Oops!</h3><p>${msg}</p></div>`;
+      }
 
-    function escHtml(s) {
-      return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    }
+      function escHtml(s) {
+        return String(s || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
+      }
 
-    function showToastL(msg, type='success') {
-      const e = document.querySelector('.toast'); if(e) e.remove();
-      const t = document.createElement('div');
-      t.className = `toast ${type}`; t.textContent = msg;
-      document.body.appendChild(t);
-      requestAnimationFrame(()=>requestAnimationFrame(()=>t.classList.add('show')));
-      setTimeout(()=>{t.classList.remove('show');setTimeout(()=>t.remove(),350);},4000);
-    }
-  </script>
-</body>
+      function showToastL(msg, type = "success") {
+        const e = document.querySelector(".toast");
+        if (e) e.remove();
+        const t = document.createElement("div");
+        t.className = `toast ${type}`;
+        t.textContent = msg;
+        document.body.appendChild(t);
+        requestAnimationFrame(() =>
+          requestAnimationFrame(() => t.classList.add("show")),
+        );
+        setTimeout(() => {
+          t.classList.remove("show");
+          setTimeout(() => t.remove(), 350);
+        }, 4000);
+      }
+    </script>
+  </body>
 </html>
